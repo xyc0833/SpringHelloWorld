@@ -8,6 +8,7 @@ import org.springframework.context.annotation.*;
 //表示这个类是一个 配置类
 @Configuration
 @ComponentScan("com.book.entity")
+@PropertySource(value = {"classpath:test.properties"}, encoding = "UTF-8")
 public class MainConfiguration {
     //如何配置Bean
     //@Bean("student")
