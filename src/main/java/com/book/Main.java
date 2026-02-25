@@ -1,6 +1,7 @@
 package com.book;
 
-import com.book.entity.Student;
+//import com.book.entity.Student;
+import com.book.DI.Student;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 
@@ -17,17 +18,21 @@ public class Main {
         //现在，这个对象不需要我们再去创建了，而是由IoC容器自动进行创建并提供，
         //我们可以直接从上下文中获取到它为我们创建的对象
         //使用getBean方法来获取对应的对象（Bean）
-        Student student = context.getBean(Student.class);
+        //Student student = context.getBean(Student.class);
         //等于我们自己没有创建对象 通过ioc容器 去new了一个对象
-        System.out.println(student);
+        //System.out.println(student);
 
-        Student s1 = (Student) context.getBean("student");
-        System.out.println(s1);
+        //Student s1 = (Student) context.getBean("student");
+        //System.out.println(s1);
 
         //IoC容器创建的Bean是每次都只有一个 单例模式
-        Student student1 = context.getBean(Student.class);
-        Student student2 = context.getBean(Student.class);
-        System.out.println(student1 == student2);   //默认为单例模式，对象始终为同一个
+        //Student student1 = context.getBean(Student.class);
+        //Student student2 = context.getBean(Student.class);
+        //System.out.println(student1 == student2);   //默认为单例模式，对象始终为同一个
 
+
+        // 依赖注入
+        Student student = context.getBean(Student.class);
+        student.study();
     }
 }

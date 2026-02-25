@@ -4,7 +4,14 @@
        xsi:schemaLocation="http://www.springframework.org/schema/beans
         https://www.springframework.org/schema/beans/spring-beans.xsd">
 <!--    这个对象不需要我们再去创建了 而是由IoC容器自动进行创建并提供-->
-    <bean name="student" class="com.book.entity.Student" scope="singleton" lazy-init="false"></bean>
+<!--    <bean name="student" class="com.book.entity.Student" scope="singleton" lazy-init="false"></bean>-->
 <!--    <bean class="com.book.entity.ArtStudent"/>-->
-    <alias name="student" alias="st"></alias>
+<!--    <alias name="student" alias="st"></alias>-->
+
+    <bean name="teacher" class="com.book.DI.ProgramTeacher"></bean>
+    <bean name="student" class="com.book.DI.Student">
+<!--        依赖注入要求对应的属性必须有一个set方法-->
+        <property name="teacher" ref="teacher"></property>
+    </bean>
+
 </beans>
