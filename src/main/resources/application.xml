@@ -9,7 +9,7 @@
 <!--    <alias name="student" alias="st"></alias>-->
 
     <bean name="teacher" class="com.book.DI.ProgramTeacher"></bean>
-    <bean name="student" class="com.book.DI.Student" autowire="constructor">
+<!--    <bean name="student" class="com.book.DI.Student" autowire="constructor" init-method="init" destroy-method="destroy">-->
 <!--        依赖注入要求对应的属性必须有一个set方法-->
 <!--        <property name="teacher" ref="teacher"></property>-->
         <!--  对于集合类型，我们可以直接使用标签编辑集合的默认值  -->
@@ -20,6 +20,11 @@
 <!--                <value>CCC</value>-->
 <!--            </list>-->
 <!--        </property>-->
-    </bean>
+<!--    </bean>-->
+
+<!--    <bean class="com.book.DI.StudentFactory" factory-method="getStudent"></bean>-->
+
+    <bean name="studentFactory" class="com.book.DI.StudentFactory"/>
+<!--    <bean factory-bean="studentFactory" factory-method="getStudent"></bean>-->
 
 </beans>
