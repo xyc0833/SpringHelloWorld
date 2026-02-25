@@ -34,5 +34,8 @@ public class Main {
         // 依赖注入
         Student student = context.getBean(Student.class);
         student.study();
+        //student.toString();
+
+        //student.printlist();
     }
 }

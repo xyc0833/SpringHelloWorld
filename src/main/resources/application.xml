@@ -9,9 +9,17 @@
 <!--    <alias name="student" alias="st"></alias>-->
 
     <bean name="teacher" class="com.book.DI.ProgramTeacher"></bean>
-    <bean name="student" class="com.book.DI.Student">
+    <bean name="student" class="com.book.DI.Student" autowire="constructor">
 <!--        依赖注入要求对应的属性必须有一个set方法-->
-        <property name="teacher" ref="teacher"></property>
+<!--        <property name="teacher" ref="teacher"></property>-->
+        <!--  对于集合类型，我们可以直接使用标签编辑集合的默认值  -->
+<!--        <property name="list" >-->
+<!--            <list>-->
+<!--                <value>AAA</value>-->
+<!--                <value>BBB</value>-->
+<!--                <value>CCC</value>-->
+<!--            </list>-->
+<!--        </property>-->
     </bean>
 
 </beans>
