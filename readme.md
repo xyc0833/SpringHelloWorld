@@ -269,3 +269,121 @@ execution：用于匹配方法执行连接点。这是使用Spring AOP时使用�
 类名：使用*也可以代表包下的所有类
 方法名称：可以使用*代表全部方法
 方法参数：填写对应的参数即可，比如(String, String)，也可以使用*来代表任意一个参数，使用..代表所有参数。
+
+
+## ProceedingJoinPoint
+
+你想了解这段 AOP 代码中 `ProceedingJoinPoint` 的核心作用，我会结合你提供的代码示例，从“是什么、能做什么、怎么用”三个维度讲清楚，让你理解它在 Spring AOP 中的核心价值。
+
+### 1. 核心定位
+`ProceedingJoinPoint` 是 Spring AOP 中**专用于环绕通知（@Around）** 的核心接口，它的本质是：**封装了被拦截的目标方法的所有信息，并提供了执行目标方法的核心能力**。
+
+简单来说，在环绕通知中，你可以通过 `ProceedingJoinPoint` 做到：
+- 控制目标方法**是否执行**、**何时执行**；
+- 修改目标方法的**入参**（就像你代码中把参数改成了 "Rust"）；
+- 获取目标方法的信息（方法名、参数、所属类等）；
+- 获取目标方法执行后的返回值，并修改它（就像你代码中把返回值从 "Java" 改成 "Rust"）。
+
+### 2. 结合你的代码理解核心方法
+先回顾你的代码核心逻辑：拦截目标方法 → 打印提示 → 强行修改入参为 "Rust" 执行目标方法 → 判断返回值，若为 "Java" 则改成 "Rust" → 返回最终值。
+
+下面拆解 `ProceedingJoinPoint` 的关键用法（对应你的代码）：
+
+#### （1）核心方法：`proceed()` / `proceed(Object[] args)`
+这是 `ProceedingJoinPoint` 最核心的方法，作用是**执行被拦截的目标方法**：
+- `joinPoint.proceed()`：使用原参数执行目标方法；
+- `joinPoint.proceed(new Object[]{"Rust"})`：**替换参数后执行目标方法**（你代码中正是这么做的，强行把参数改成了 "Rust"）。
+
+如果不调用 `proceed()` 方法，目标方法就不会执行——这也是环绕通知能“控制目标方法是否执行”的关键。
+
+#### （2）获取目标方法的元信息（扩展）
+除了执行方法，`ProceedingJoinPoint` 还能获取目标方法的各类信息，比如：
+```java
+// 获取目标方法的参数（原参数）
+Object[] args = joinPoint.getArgs();
+// 获取目标方法的签名（方法名、返回类型等）
+Signature signature = joinPoint.getSignature();
+String methodName = signature.getName(); // 目标方法名
+// 获取目标对象（被代理的原始对象）
+Object target = joinPoint.getTarget();
+```
+
+### 3. 完整示例（结合你的代码）
+为了让你更直观理解，我补全整个 AOP 代码，展示 `ProceedingJoinPoint` 的完整使用场景：
+
+```java
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.springframework.stereotype.Component;
+
+// 1. 定义切面类
+@Aspect
+@Component
+public class StudyAdvice {
+
+    // 2. 环绕通知：拦截指定方法（比如 com.example.service.StudyService.learn 方法）
+    @Around("execution(* com.example.service.StudyService.learn(..))")
+    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+        // 打印提示
+        System.out.println("我是她的家长，他不能学Java，必须学Rust，这是为他好");
+        
+        // 3. 核心：替换参数后执行目标方法（原参数被替换为 ["Rust"]）
+        Object value = joinPoint.proceed(new Object[]{"Rust"});
+        
+        // 4. 修改目标方法的返回值
+        if(value.equals("Java")) {
+            System.out.println("听话，学Rust以后进大厂！");
+            value = "Rust";
+        }
+        
+        return value;
+    }
+}
+
+// 目标服务类
+@Component
+class StudyService {
+    // 被拦截的目标方法：接收一个参数，返回学习的语言
+    public String learn(String language) {
+        System.out.println("正在学习：" + language);
+        return language; // 原逻辑返回传入的语言
+    }
+}
+
+// 测试类
+public class Test {
+    public static void main(String[] args) {
+        // 初始化 Spring 容器（省略容器创建代码）
+        StudyService studyService = context.getBean(StudyService.class);
+        // 调用方法，传入 "Java"
+        String result = studyService.learn("Java");
+        System.out.println("最终学习的语言：" + result);
+    }
+}
+```
+
+**执行结果**：
+```
+我是她的家长，他不能学Java，必须学Rust，这是为他好
+正在学习：Rust
+最终学习的语言：Rust
+```
+
+可以看到：
+- 目标方法原本要接收 "Java"，但通过 `proceed(new Object[]{"Rust"})` 强行替换了参数；
+- 目标方法执行由 `proceed()` 触发，没有这个调用，目标方法不会执行。
+
+### 4. 与普通 JoinPoint 的区别（关键）
+你可能会见过 `JoinPoint` 接口，这里要明确两者的核心差异：
+| 接口                | 适用通知类型                | 核心能力                                  |
+|---------------------|-----------------------------|-------------------------------------------|
+| `JoinPoint`         | 前置（@Before）、后置（@After）、异常（@AfterThrowing）等 | 只能获取目标方法信息（参数、方法名等），**不能执行目标方法** |
+| `ProceedingJoinPoint` | 环绕通知（@Around）         | 继承 `JoinPoint`，新增 `proceed()` 方法，**能控制目标方法执行** |
+
+简单说：环绕通知必须用 `ProceedingJoinPoint`，因为只有它能让目标方法“走起来”；其他通知用普通 `JoinPoint` 就够了。
+
+### 总结
+1. `ProceedingJoinPoint` 是 Spring AOP 环绕通知的核心接口，**封装目标方法信息并控制其执行**；
+2. 核心能力：通过 `proceed()` 执行目标方法（可替换参数）、获取目标方法元信息、控制目标方法是否执行；
+3. 关键区别：比普通 `JoinPoint` 多了 `proceed()` 方法，这是环绕通知能“拦截并控制方法执行”的核心。

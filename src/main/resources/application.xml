@@ -7,10 +7,10 @@
     <bean class="com.book.entity.Student"/>
     <bean id="studentAOP" class="com.book.entity.StudentAOP"/>
     <aop:config>
-        <aop:pointcut id="test" expression="execution(* com.book.entity.Student.study())"/>
+        <aop:pointcut id="test" expression="execution(* com.book.entity.Student.study(String))"/>
         <aop:aspect ref="studentAOP">
             <!--     method就是我们的增强方法，pointcut-ref指向我们刚刚创建的切点     -->
-            <aop:after method="afterStudy" pointcut-ref="test"></aop:after>
+            <aop:around method="around" pointcut-ref="test"></aop:around>
         </aop:aspect>
     </aop:config>
 
