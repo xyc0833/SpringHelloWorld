@@ -18,37 +18,8 @@ import java.util.Map;
 @Component
 @ToString
 public class Student {
-    //@Value("${test.name}")
-    //public final String name;
-
-//    public Student(@Value("${test.name}") String name){
-//        this.name = name;
-//    }
-    ////比如下面要访问name属性，那么这个属性得可以访问才行，访问权限不够是不行的
-//    public String getName(){
-//        return name;
-//    }
-    //@Autowired
-    //@Resource
-            //@Qualifier("a") //明确指定用a
-    //Teacher teacher;
-
-//    public void setTeacher(Teacher teacher){
-//        this.teacher = teacher;
-//    }
-
-//    @PostConstruct
-//    public void init(){
-//        System.out.println(name);
-//        System.out.println("我是初始化方法");
-//    }
-//
-//    @PreDestroy
-//    public void destroy(){
-//        System.out.println("我是销毁方法");
-//    }
-
-
-    public Map<String,String> map = Map.of("test","xyc","123","kku");
-    public List<String> list = List.of("123","1233321","89789");
+    public void study(){
+        System.out.println("室友还在打游戏，我狠狠的学Java，太爽了");
+        //现在我们希望在这个方法执行完之后，打印一些其他的内容，在不修改原有代码的情况下，该怎么做呢？
+    }
 }
