@@ -17,6 +17,6 @@
     <mappers>
         <mapper class="com.book.mapper.TestMapper"></mapper>
         <!-- 导入 com.book.mapper 包下的所有 Mapper 接口 -->
-        <package name="com.book.mapper"/>
+<!--        <package name="com.book.mapper"/>-->
     </mappers>
 </configuration>
