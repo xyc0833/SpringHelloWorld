@@ -15,7 +15,7 @@ import java.util.Map;
 
 //这个类是一个需要被管理的 Bean
 //你可以通过 @Autowired 等方式直接注入使用，无需手动 new 对象
-@Component
+@Component//类上直接添加@Component快速注册Bean
 @ToString
 public class Student {
     public void study(){
@@ -24,12 +24,6 @@ public class Student {
     }
     public String study(String str){  //现在方法有一个String类型的参数
         System.out.println("都别学Java了，根本找不到工作，快去卷"+str);
-//        if(str.equals("Java"))
-//            System.out.println("我的梦想是学Java");
-//        else {
-//            System.out.println("我就要学Java，不要修改我的梦想！");
-//            str = "Java";
-//        }
         return str;
     }
 }

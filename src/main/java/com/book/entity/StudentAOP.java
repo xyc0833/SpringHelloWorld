@@ -2,24 +2,18 @@ package com.book.entity;
 
 import org.aopalliance.intercept.MethodInterceptor;
 import org.aopalliance.intercept.MethodInvocation;
-import org.aspectj.lang.JoinPoint;
-import org.aspectj.lang.ProceedingJoinPoint;
-import org.springframework.aop.MethodBeforeAdvice;
-import org.springframework.lang.Nullable;
+import org.aspectj.lang.annotation.Aspect;
+import org.aspectj.lang.annotation.Before;
+import org.springframework.stereotype.Component;
 
-import java.lang.reflect.Method;
-
-public class StudentAOP implements MethodInterceptor {
-    @Override
-    //invoke方法就是代理方法
-    public Object invoke(MethodInvocation invocation) throws Throwable {
-        //跟之前一样，需要手动proceed()才能调用原方法
-        Object value = invocation.proceed();
-        return value+"增强";
+@Aspect
+@Component
+//添加@Aspect注解和@Component将其注册为Bean即可
+public class StudentAOP {
+    //execution写法跟之前一样
+    @Before("execution(* com.book.entity.Student.study())")
+    public void before(){
+        System.out.println("我是之前执行的内容！");
     }
 
-//    @Override
-//    public void before(Method method, Object[] args, @Nullable Object target) throws Throwable {
-//        System.out.println("我是前置方法");
-//    }
 }
