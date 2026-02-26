@@ -12,6 +12,8 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- 统一SLF4J版本，和Spring 6.0.10依赖的版本匹配 -->
+        <slf4j.version>2.0.9</slf4j.version>
     </properties>
     <dependencies>
         <!-- 这两个依赖不用我说了吧 -->
@@ -58,6 +60,25 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-aspects</artifactId>
             <version>6.0.10</version>
+        </dependency>
+        <!-- 数据库连接池 -->
+        <dependency>
+            <groupId>com.zaxxer</groupId>
+            <artifactId>HikariCP</artifactId>
+            <version>5.0.1</version>
+        </dependency>
+        <!-- 修复SLF4J版本冲突：统一使用2.x版本 -->
+        <!-- 显式声明slf4j-api，覆盖Spring依赖的版本，保证统一 -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <!-- 2.x版本的slf4j-jdk14绑定，兼容slf4j-api 2.x -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-jdk14</artifactId>
+            <version>${slf4j.version}</version>
         </dependency>
     </dependencies>
 </project>
