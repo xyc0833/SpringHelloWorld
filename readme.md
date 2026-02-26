@@ -88,3 +88,394 @@ public class A {
 3. 最终效果：类A和类B彻底解耦，A只用B，不用管B的创建/来源，这就是依赖注入的核心价值。
 
 这个理解到位后，你再看Spring里的各种注入方式（构造器/setter/字段），本质都是“管家递东西的不同方式”，就完全不会懵了~
+
+
+## utf -8 英文 中文的问题
+
+修改这里的默认编码：Settings->Editor->File Encodings->Default encoding for properties files
+
+
+## springEL表达式在企业开发中的作用？
+你想了解 Spring EL（Spring 表达式语言，简称 SpEL）在企业级开发中的核心作用和实际应用场景，我会从核心价值、典型使用场景、实战示例三个维度，结合企业开发的实际需求来讲解，让你清楚它能解决什么问题、怎么用。
+
+### 1. 核心作用
+Spring EL 是一种强大的表达式语言，核心价值是**在 Spring 框架中提供动态求值能力**：
+它允许你在配置（注解、XML、配置文件）或代码中，以表达式的形式动态获取/计算值、访问对象属性/方法、调用静态方法、甚至执行逻辑判断，无需硬编码，让配置和代码更灵活、更动态，适配企业开发中“配置与代码解耦”“动态调整逻辑”的核心需求。
+
+简单来说：SpEL 让你可以“用表达式写逻辑”，替代一部分硬编码的判断/取值逻辑，尤其适合需要动态读取配置、动态访问对象的场景。
+
+### 2. 企业开发中的典型使用场景（附实战示例）
+以下是 SpEL 最常用的 5 个企业级场景，每个场景都配可直接参考的代码/配置示例：
+
+#### 场景1：动态注入属性（替代硬编码，解耦配置）
+这是最基础也最常用的场景：在 `@Value` 注解中使用 SpEL，从配置文件、系统环境、Bean 属性中动态取值，而非写死值。
+```java
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+@Component
+public class OrderService {
+    // 1. 读取配置文件（application.properties）中的值：order.timeout=30
+    @Value("#{${order.timeout}}") 
+    private Integer orderTimeout;
+
+    // 2. 读取另一个 Bean（userService）的属性值
+    @Value("#{userService.defaultPageSize}") 
+    private Integer defaultPageSize;
+
+    // 3. 读取系统环境变量（比如服务器端口）
+    @Value("#{systemEnvironment['SERVER_PORT']}") 
+    private String serverPort;
+
+    // 4. 动态计算值（比如超时时间翻倍）
+    @Value("#{${order.timeout} * 2}") 
+    private Integer doubleTimeout;
+}
+```
+
+#### 场景2：在 Spring 注解中动态指定参数
+企业开发中，很多注解的参数需要动态决定（比如缓存 key、定时任务 cron 表达式），SpEL 可以满足这个需求。
+##### 示例：动态生成缓存 Key（Spring Cache 场景）
+```java
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+@Service
+public class UserService {
+    // SpEL 动态拼接缓存 key：user_用户ID
+    // #userId 表示取方法参数 userId 的值
+    @Cacheable(value = "userCache", key = "'user_' + #userId")
+    public User getUserById(Long userId) {
+        // 模拟从数据库查询用户
+        return new User(userId, "张三");
+    }
+}
+```
+
+##### 示例：动态指定定时任务 cron 表达式
+```java
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@Component
+public class ScheduledTask {
+    // 从配置文件读取 cron 表达式，动态调整任务执行频率
+    @Scheduled(cron = "#{@configProperties.get('task.cron')}")
+    public void doTask() {
+        System.out.println("定时任务执行...");
+    }
+}
+```
+
+#### 场景3：在 XML 配置中动态取值（兼容老项目）
+部分企业老项目仍使用 XML 配置 Spring Bean，SpEL 可在 XML 中动态配置属性：
+```xml
+<bean id="productService" class="com.example.ProductService">
+    <!-- 动态注入另一个 Bean 的属性 -->
+    <property name="maxStock" value="#{stockConfig.maxStock}"/>
+    <!-- 动态计算值 -->
+    <property name="minStock" value="#{stockConfig.maxStock / 10}"/>
+</bean>
+```
+
+#### 场景4：在代码中手动执行 SpEL（复杂动态逻辑）
+对于更复杂的动态逻辑（比如根据用户输入的表达式计算值），可以手动创建 SpEL 解析器执行表达式：
+```java
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
+
+public class SpELDemo {
+    public static void main(String[] args) {
+        // 1. 创建 SpEL 解析器
+        ExpressionParser parser = new SpelExpressionParser();
+        
+        // 2. 简单表达式求值
+        Integer result = parser.parseExpression("100 + 200 * 2").getValue(Integer.class);
+        System.out.println(result); // 输出：500
+        
+        // 3. 访问对象属性（复杂场景）
+        User user = new User(1L, "李四");
+        StandardEvaluationContext context = new StandardEvaluationContext(user);
+        String userName = parser.parseExpression("name").getValue(context, String.class);
+        System.out.println(userName); // 输出：李四
+    }
+}
+
+class User {
+    private Long id;
+    private String name;
+    // 构造方法、getter/setter 省略
+}
+```
+
+#### 场景5：条件化配置（结合 @Conditional）
+企业开发中常需要根据环境/配置动态创建 Bean，SpEL 可配合 `@Conditional` 实现条件判断：
+```java
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Condition;
+import org.springframework.context.annotation.ConditionContext;
+import org.springframework.core.env.Environment;
+import org.springframework.core.type.AnnotatedTypeMetadata;
+
+@Configuration
+public class DataSourceConfig {
+    // 当配置文件中 db.type=mysql 时，才创建 MySQL 数据源 Bean
+    @Bean
+    @Conditional(MySQLCondition.class)
+    public DataSource mysqlDataSource() {
+        return new MySQLDataSource();
+    }
+
+    // 自定义条件类，使用 SpEL 判断
+    static class MySQLCondition implements Condition {
+        @Override
+        public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+            Environment env = context.getEnvironment();
+            // 使用 SpEL 解析配置值并判断
+            return "mysql".equals(env.getProperty("db.type"));
+        }
+    }
+}
+```
+
+### 3. 企业开发中的优势
+- **解耦**：将硬编码的数值、逻辑抽离到表达式/配置中，无需修改代码即可调整；
+- **动态**：支持运行时动态求值，适配多环境、多场景的动态配置需求；
+- **简洁**：用简洁的表达式替代复杂的 Java 逻辑（比如缓存 key 拼接、数值计算）；
+- **统一**：在注解、XML、代码中都能使用，是 Spring 体系内统一的表达式语言。
+
+### 总结
+1. SpEL 核心作用：为 Spring 提供**动态求值能力**，实现配置与代码解耦、逻辑动态调整；
+2. 核心使用场景：`@Value` 动态注入、缓存/定时任务注解参数、XML 配置、代码中动态求值；
+3. 企业价值：减少硬编码、适配多环境、简化动态逻辑，是 Spring 企业开发中提升灵活性的核心工具。
+
+## AOP面向切片
+
+AOP（Aspect Oriented Programming）思想实际上就是：在运行时，动态地将代码切入到类的指定方法、指定位置上。
+也就是说，我们可以使用AOP来帮助我们在方法执行前或执行之后，做一些额外的操作，实际上，它就是代理！
+
+在不修改代码的情况下 添加前置操作 或者后置操作
+
+
+execution：用于匹配方法执行连接点。这是使用Spring AOP时使用的主要点切割指示器。
+
+修饰符 包名.类名.方法名称(方法参数)
+
+修饰符：public、protected、private、包括返回值类型、static等等（使用*代表任意修饰符）
+包名：如com.test（* 代表全部，比如com.*代表com包下的全部包）
+类名：使用*也可以代表包下的所有类
+方法名称：可以使用*代表全部方法
+方法参数：填写对应的参数即可，比如(String, String)，也可以使用*来代表任意一个参数，使用..代表所有参数。
+
+
+## ProceedingJoinPoint
+
+你想了解这段 AOP 代码中 `ProceedingJoinPoint` 的核心作用，我会结合你提供的代码示例，从“是什么、能做什么、怎么用”三个维度讲清楚，让你理解它在 Spring AOP 中的核心价值。
+
+### 1. 核心定位
+`ProceedingJoinPoint` 是 Spring AOP 中**专用于环绕通知（@Around）** 的核心接口，它的本质是：**封装了被拦截的目标方法的所有信息，并提供了执行目标方法的核心能力**。
+
+简单来说，在环绕通知中，你可以通过 `ProceedingJoinPoint` 做到：
+- 控制目标方法**是否执行**、**何时执行**；
+- 修改目标方法的**入参**（就像你代码中把参数改成了 "Rust"）；
+- 获取目标方法的信息（方法名、参数、所属类等）；
+- 获取目标方法执行后的返回值，并修改它（就像你代码中把返回值从 "Java" 改成 "Rust"）。
+
+### 2. 结合你的代码理解核心方法
+先回顾你的代码核心逻辑：拦截目标方法 → 打印提示 → 强行修改入参为 "Rust" 执行目标方法 → 判断返回值，若为 "Java" 则改成 "Rust" → 返回最终值。
+
+下面拆解 `ProceedingJoinPoint` 的关键用法（对应你的代码）：
+
+#### （1）核心方法：`proceed()` / `proceed(Object[] args)`
+这是 `ProceedingJoinPoint` 最核心的方法，作用是**执行被拦截的目标方法**：
+- `joinPoint.proceed()`：使用原参数执行目标方法；
+- `joinPoint.proceed(new Object[]{"Rust"})`：**替换参数后执行目标方法**（你代码中正是这么做的，强行把参数改成了 "Rust"）。
+
+如果不调用 `proceed()` 方法，目标方法就不会执行——这也是环绕通知能“控制目标方法是否执行”的关键。
+
+#### （2）获取目标方法的元信息（扩展）
+除了执行方法，`ProceedingJoinPoint` 还能获取目标方法的各类信息，比如：
+```java
+// 获取目标方法的参数（原参数）
+Object[] args = joinPoint.getArgs();
+// 获取目标方法的签名（方法名、返回类型等）
+Signature signature = joinPoint.getSignature();
+String methodName = signature.getName(); // 目标方法名
+// 获取目标对象（被代理的原始对象）
+Object target = joinPoint.getTarget();
+```
+
+### 3. 完整示例（结合你的代码）
+为了让你更直观理解，我补全整个 AOP 代码，展示 `ProceedingJoinPoint` 的完整使用场景：
+
+```java
+import org.aspectj.lang.ProceedingJoinPoint;
+import org.aspectj.lang.annotation.Around;
+import org.aspectj.lang.annotation.Aspect;
+import org.springframework.stereotype.Component;
+
+// 1. 定义切面类
+@Aspect
+@Component
+public class StudyAdvice {
+
+    // 2. 环绕通知：拦截指定方法（比如 com.example.service.StudyService.learn 方法）
+    @Around("execution(* com.example.service.StudyService.learn(..))")
+    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+        // 打印提示
+        System.out.println("我是她的家长，他不能学Java，必须学Rust，这是为他好");
+        
+        // 3. 核心：替换参数后执行目标方法（原参数被替换为 ["Rust"]）
+        Object value = joinPoint.proceed(new Object[]{"Rust"});
+        
+        // 4. 修改目标方法的返回值
+        if(value.equals("Java")) {
+            System.out.println("听话，学Rust以后进大厂！");
+            value = "Rust";
+        }
+        
+        return value;
+    }
+}
+
+// 目标服务类
+@Component
+class StudyService {
+    // 被拦截的目标方法：接收一个参数，返回学习的语言
+    public String learn(String language) {
+        System.out.println("正在学习：" + language);
+        return language; // 原逻辑返回传入的语言
+    }
+}
+
+// 测试类
+public class Test {
+    public static void main(String[] args) {
+        // 初始化 Spring 容器（省略容器创建代码）
+        StudyService studyService = context.getBean(StudyService.class);
+        // 调用方法，传入 "Java"
+        String result = studyService.learn("Java");
+        System.out.println("最终学习的语言：" + result);
+    }
+}
+```
+
+**执行结果**：
+```
+我是她的家长，他不能学Java，必须学Rust，这是为他好
+正在学习：Rust
+最终学习的语言：Rust
+```
+
+可以看到：
+- 目标方法原本要接收 "Java"，但通过 `proceed(new Object[]{"Rust"})` 强行替换了参数；
+- 目标方法执行由 `proceed()` 触发，没有这个调用，目标方法不会执行。
+
+### 4. 与普通 JoinPoint 的区别（关键）
+你可能会见过 `JoinPoint` 接口，这里要明确两者的核心差异：
+| 接口                | 适用通知类型                | 核心能力                                  |
+|---------------------|-----------------------------|-------------------------------------------|
+| `JoinPoint`         | 前置（@Before）、后置（@After）、异常（@AfterThrowing）等 | 只能获取目标方法信息（参数、方法名等），**不能执行目标方法** |
+| `ProceedingJoinPoint` | 环绕通知（@Around）         | 继承 `JoinPoint`，新增 `proceed()` 方法，**能控制目标方法执行** |
+
+简单说：环绕通知必须用 `ProceedingJoinPoint`，因为只有它能让目标方法“走起来”；其他通知用普通 `JoinPoint` 就够了。
+
+### 总结
+1. `ProceedingJoinPoint` 是 Spring AOP 环绕通知的核心接口，**封装目标方法信息并控制其执行**；
+2. 核心能力：通过 `proceed()` 执行目标方法（可替换参数）、获取目标方法元信息、控制目标方法是否执行；
+3. 关键区别：比普通 `JoinPoint` 多了 `proceed()` 方法，这是环绕通知能“拦截并控制方法执行”的核心。
+
+
+## AOP 领域中的特性术语
+
+通知（Advice）: AOP 框架中的增强处理，通知描述了切面何时执行以及如何执行增强处理，也就是我们上面编写的方法实现。
+连接点（join point）: 连接点表示应用执行过程中能够插入切面的一个点，这个点可以是方法的调用、异常的抛出，实际上就是我们在方法执行前或是执行后需要做的内容。
+切点（PointCut）: 可以插入增强处理的连接点，可以是方法执行之前也可以方法执行之后，还可以是抛出异常之类的。
+切面（Aspect）: 切面是通知和切点的结合，我们之前在xml中定义的就是切面，包括很多信息。
+引入（Introduction）：引入允许我们向现有的类添加新的方法或者属性。
+织入（Weaving）: 将增强处理添加到目标对象中，并创建一个被增强的对象，我们之前都是在将我们的增强处理添加到目标对象，也就是织入（这名字挺有文艺范的）
+
+
+## Runnable
+
+你想快速了解 Java 中 `Runnable` 的核心概念和使用方式，我会用最简洁的语言讲清楚它的作用、用法和核心特点，让你一眼看懂。
+
+### 1. 核心定义
+`Runnable` 是 Java 中用于**定义线程任务**的核心接口，它的本质是：**封装一段可以被线程执行的代码逻辑**。
+
+简单来说，你想让线程做什么事，就把这个“事”（代码逻辑）写在 `Runnable` 的实现类里，然后交给线程（`Thread`）去执行——这是 Java 实现多线程最基础、最常用的方式之一。
+
+### 2. 基本使用（两步搞定）
+`Runnable` 只有一个抽象方法 `run()`，所有要执行的任务逻辑都写在这个方法里。
+
+#### 步骤1：实现 Runnable 接口，重写 run() 方法
+```java
+// 1. 实现 Runnable 接口，定义线程要执行的任务
+class MyRunnable implements Runnable {
+    @Override
+    public void run() {
+        // 线程要执行的逻辑：比如打印1-5
+        for (int i = 1; i <= 5; i++) {
+            System.out.println("线程执行中：" + i);
+            try {
+                Thread.sleep(500); // 暂停500毫秒，模拟耗时操作
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+#### 步骤2：创建 Thread 对象，传入 Runnable 并启动线程
+```java
+public class RunnableDemo {
+    public static void main(String[] args) {
+        // 2. 创建 Runnable 实例（任务）
+        Runnable task = new MyRunnable();
+        
+        // 3. 把任务交给 Thread 执行，并启动线程
+        Thread thread = new Thread(task);
+        thread.start(); // 启动线程（底层会调用 run() 方法）
+        
+        System.out.println("主线程继续执行...");
+    }
+}
+```
+
+**执行结果**（主线程和子线程交替执行）：
+```
+主线程继续执行...
+线程执行中：1
+线程执行中：2
+线程执行中：3
+线程执行中：4
+线程执行中：5
+```
+
+### 3. 核心特点（新手必知）
+1. **无返回值 + 不抛检查异常**：`run()` 方法返回值是 `void`，且不能抛出 `throws` 声明的检查异常（只能捕获处理）；
+2. **解耦任务与线程**：把“要做什么”（Runnable 任务）和“谁来做”（Thread 线程）分开，符合面向对象的设计思想；
+3. **避免单继承限制**：Java 是单继承，如果直接继承 `Thread` 类创建线程，就不能继承其他类；而实现 `Runnable` 接口，还能继承其他类（这是推荐用 `Runnable` 的核心原因）；
+4. **简化写法**：可以用匿名内部类/Lambda 简化代码（JDK8+）：
+   ```java
+   // Lambda 简化写法（无需定义单独的实现类）
+   Thread thread = new Thread(() -> {
+       System.out.println("Lambda 实现 Runnable，更简洁");
+   });
+   thread.start();
+   ```
+
+### 总结
+1. `Runnable` 是定义线程任务的接口，核心是重写 `run()` 方法封装任务逻辑；
+2. 使用方式：实现接口 → 传入 `Thread` → 调用 `start()` 启动线程；
+3. 核心优势：解耦任务与线程、避免单继承限制，是 Java 多线程的首选方式。
+
+
+### hikaricp 数据库连接
+
+
+还是报错的去看下外部库里slf4j的api和你导入的依赖版本是否一致，不一样的改成一样的就ok了
