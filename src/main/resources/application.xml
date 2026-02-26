@@ -8,10 +8,12 @@
     <bean id="studentAOP" class="com.book.entity.StudentAOP"/>
     <aop:config>
         <aop:pointcut id="test" expression="execution(* com.book.entity.Student.study(String))"/>
-        <aop:aspect ref="studentAOP">
-            <!--     method就是我们的增强方法，pointcut-ref指向我们刚刚创建的切点     -->
-            <aop:around method="around" pointcut-ref="test"></aop:around>
-        </aop:aspect>
+        <!--  这里只需要添加我们刚刚写好的advisor就可以了，注意是Bean的名字  -->
+        <aop:advisor advice-ref="studentAOP" pointcut-ref="test"></aop:advisor>
+        <!--        <aop:aspect ref="studentAOP">-->
+<!--            &lt;!&ndash;     method就是我们的增强方法，pointcut-ref指向我们刚刚创建的切点     &ndash;&gt;-->
+<!--            -->
+<!--        </aop:aspect>-->
     </aop:config>
 
 </beans>

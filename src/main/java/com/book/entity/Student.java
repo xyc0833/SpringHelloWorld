@@ -24,12 +24,12 @@ public class Student {
     }
     public String study(String str){  //现在方法有一个String类型的参数
         System.out.println("都别学Java了，根本找不到工作，快去卷"+str);
-        if(str.equals("Java"))
-            System.out.println("我的梦想是学Java");
-        else {
-            System.out.println("我就要学Java，不要修改我的梦想！");
-            str = "Java";
-        }
+//        if(str.equals("Java"))
+//            System.out.println("我的梦想是学Java");
+//        else {
+//            System.out.println("我就要学Java，不要修改我的梦想！");
+//            str = "Java";
+//        }
         return str;
     }
 }

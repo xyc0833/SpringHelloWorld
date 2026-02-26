@@ -387,3 +387,89 @@ public class Test {
 1. `ProceedingJoinPoint` 是 Spring AOP 环绕通知的核心接口，**封装目标方法信息并控制其执行**；
 2. 核心能力：通过 `proceed()` 执行目标方法（可替换参数）、获取目标方法元信息、控制目标方法是否执行；
 3. 关键区别：比普通 `JoinPoint` 多了 `proceed()` 方法，这是环绕通知能“拦截并控制方法执行”的核心。
+
+
+## AOP 领域中的特性术语
+
+通知（Advice）: AOP 框架中的增强处理，通知描述了切面何时执行以及如何执行增强处理，也就是我们上面编写的方法实现。
+连接点（join point）: 连接点表示应用执行过程中能够插入切面的一个点，这个点可以是方法的调用、异常的抛出，实际上就是我们在方法执行前或是执行后需要做的内容。
+切点（PointCut）: 可以插入增强处理的连接点，可以是方法执行之前也可以方法执行之后，还可以是抛出异常之类的。
+切面（Aspect）: 切面是通知和切点的结合，我们之前在xml中定义的就是切面，包括很多信息。
+引入（Introduction）：引入允许我们向现有的类添加新的方法或者属性。
+织入（Weaving）: 将增强处理添加到目标对象中，并创建一个被增强的对象，我们之前都是在将我们的增强处理添加到目标对象，也就是织入（这名字挺有文艺范的）
+
+
+## Runnable
+
+你想快速了解 Java 中 `Runnable` 的核心概念和使用方式，我会用最简洁的语言讲清楚它的作用、用法和核心特点，让你一眼看懂。
+
+### 1. 核心定义
+`Runnable` 是 Java 中用于**定义线程任务**的核心接口，它的本质是：**封装一段可以被线程执行的代码逻辑**。
+
+简单来说，你想让线程做什么事，就把这个“事”（代码逻辑）写在 `Runnable` 的实现类里，然后交给线程（`Thread`）去执行——这是 Java 实现多线程最基础、最常用的方式之一。
+
+### 2. 基本使用（两步搞定）
+`Runnable` 只有一个抽象方法 `run()`，所有要执行的任务逻辑都写在这个方法里。
+
+#### 步骤1：实现 Runnable 接口，重写 run() 方法
+```java
+// 1. 实现 Runnable 接口，定义线程要执行的任务
+class MyRunnable implements Runnable {
+    @Override
+    public void run() {
+        // 线程要执行的逻辑：比如打印1-5
+        for (int i = 1; i <= 5; i++) {
+            System.out.println("线程执行中：" + i);
+            try {
+                Thread.sleep(500); // 暂停500毫秒，模拟耗时操作
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+}
+```
+
+#### 步骤2：创建 Thread 对象，传入 Runnable 并启动线程
+```java
+public class RunnableDemo {
+    public static void main(String[] args) {
+        // 2. 创建 Runnable 实例（任务）
+        Runnable task = new MyRunnable();
+        
+        // 3. 把任务交给 Thread 执行，并启动线程
+        Thread thread = new Thread(task);
+        thread.start(); // 启动线程（底层会调用 run() 方法）
+        
+        System.out.println("主线程继续执行...");
+    }
+}
+```
+
+**执行结果**（主线程和子线程交替执行）：
+```
+主线程继续执行...
+线程执行中：1
+线程执行中：2
+线程执行中：3
+线程执行中：4
+线程执行中：5
+```
+
+### 3. 核心特点（新手必知）
+1. **无返回值 + 不抛检查异常**：`run()` 方法返回值是 `void`，且不能抛出 `throws` 声明的检查异常（只能捕获处理）；
+2. **解耦任务与线程**：把“要做什么”（Runnable 任务）和“谁来做”（Thread 线程）分开，符合面向对象的设计思想；
+3. **避免单继承限制**：Java 是单继承，如果直接继承 `Thread` 类创建线程，就不能继承其他类；而实现 `Runnable` 接口，还能继承其他类（这是推荐用 `Runnable` 的核心原因）；
+4. **简化写法**：可以用匿名内部类/Lambda 简化代码（JDK8+）：
+   ```java
+   // Lambda 简化写法（无需定义单独的实现类）
+   Thread thread = new Thread(() -> {
+       System.out.println("Lambda 实现 Runnable，更简洁");
+   });
+   thread.start();
+   ```
+
+### 总结
+1. `Runnable` 是定义线程任务的接口，核心是重写 `run()` 方法封装任务逻辑；
+2. 使用方式：实现接口 → 传入 `Thread` → 调用 `start()` 启动线程；
+3. 核心优势：解耦任务与线程、避免单继承限制，是 Java 多线程的首选方式。
